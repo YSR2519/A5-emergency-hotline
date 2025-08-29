@@ -78,7 +78,7 @@
                 <span id="coin-count" class="font-semibold">100</span>
             </div>
             <div class="flex items-center space-x-1 text-blue-500">
-                <i class="fas fa-copy"></i>
+                <!-- <button class="btn btn-active bg-green-700 w-20 rounded-full ">Copy</button> -->
                 <span id="copy-count" class="font-semibold">0</span>
             </div>
         </div>
@@ -90,7 +90,7 @@
         <h1 class="text-3xl md:text-5xl font-extrabold mb-2">Emergency Service Directory</h1>
         <p class="text-base md:text-lg opacity-90">Government Emergency Services at Your Fingertip - A Project by Government of the People's Republic of Bangladesh</p>
     </header>
-    
+
       <!-- Main Section -->
 
     <main class="container mx-auto p-4 md:p-8 flex-grow">
@@ -350,6 +350,154 @@
             </section>
         </div>
     </main>
+   <script>
+        // DOM Elements
+        const heartCountSpan = document.getElementById('heart-count');
+        const coinCountSpan = document.getElementById('coin-count');
+        const copyCountSpan = document.getElementById('copy-count');
+        const callHistoryList = document.getElementById('call-history-list');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
+        let noHistoryMessage = document.getElementById('no-history-message'); 
 
+        // Initial counts
+        let heartCount = 0;
+        let coinCount = 100;
+        let copyCount = 0;
+
+        // Function to update counts in the navbar
+        function updateCounts() {
+            heartCountSpan.textContent = heartCount;
+            coinCountSpan.textContent = coinCount;
+            copyCountSpan.textContent = copyCount;
+        }
+
+        // Function to format time
+        function formatTime(date) {
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            let seconds = date.getSeconds();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            return `${hours}:${minutes}:${seconds} ${ampm}`;
+        }
+
+        // Add event listeners to all heart icons
+        document.querySelectorAll('.fa-heart').forEach(icon => {
+            icon.addEventListener('click', () => {
+                // Toggle heart icon color
+                if (icon.classList.contains('text-gray-400')) {
+                    icon.classList.remove('text-gray-400');
+                    icon.classList.add('text-red-500');
+                    heartCount++;
+                } else {
+                    icon.classList.remove('text-red-500');
+                    icon.classList.add('text-gray-400');
+                    heartCount--;
+                }
+                updateCounts();
+            });
+        });
+
+        // Add event listeners to all copy buttons
+        document.querySelectorAll('.copy-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const card = event.target.closest('.bg-white');
+                const hotlineNumber = card.querySelector('.hotline-number').textContent.trim();
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(hotlineNumber)
+                        .then(() => {
+                            alert(`'${hotlineNumber}' has been copied to your clipboard!`);
+                            copyCount++;
+                            updateCounts();
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy text: ', err);
+
+                            const tempInput = document.createElement('textarea');
+                            tempInput.value = hotlineNumber;
+                            document.body.appendChild(tempInput);
+                            tempInput.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(tempInput);
+                            alert(`'${hotlineNumber}' has been copied to your clipboard!`);
+                            copyCount++;
+                            updateCounts();
+                        });
+                } else {
+                    // Older browser fallback
+                    const tempInput = document.createElement('textarea');
+                    tempInput.value = hotlineNumber;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                    alert(`'${hotlineNumber}' has been copied to your clipboard!`);
+                    copyCount++;
+                    updateCounts();
+                }
+            });
+        });
+
+
+        // Add event listeners to all call buttons
+        document.querySelectorAll('.call-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const serviceName = button.dataset.serviceName;
+                const serviceNumber = button.dataset.serviceNumber;
+
+                // Check coin count
+                if (coinCount < 20) {
+                    alert('Insufficient coins! You need at least 20 coins to make a call.');
+                    return;
+                }
+
+                // Show alert for call
+                alert(`Calling ${serviceName} at ${serviceNumber}...`);
+
+                // Reduce coin count
+                coinCount -= 20;
+                updateCounts();
+
+                // Add to call history
+                const now = new Date();
+                const time = formatTime(now);
+
+                const historyItem = document.createElement('div');
+                historyItem.classList.add('flex', 'justify-between', 'items-center', 'bg-gray-50', 'rounded-md', 'p-3', 'mb-2', 'shadow-sm');
+                historyItem.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-gray-800">${serviceName}</p>
+                        <p class="text-gray-600 text-sm">${serviceNumber}</p>
+                    </div>
+                    <span class="text-gray-500 text-sm">${time}</span>
+                `;
+                callHistoryList.prepend(historyItem); 
+
+                if (noHistoryMessage) {
+                    noHistoryMessage.remove();
+                    noHistoryMessage = null; 
+            });
+        });
+
+        // Add event listener to clear history button
+        clearHistoryBtn.addEventListener('click', () => {
+           
+            if (confirm('Are you sure you want to clear all call history?')) {
+                callHistoryList.innerHTML = ''; 
+                const newMessage = document.createElement('p');
+                newMessage.id = 'no-history-message';
+                newMessage.classList.add('text-gray-500', 'text-center', 'py-4');
+                newMessage.textContent = 'No call history yet.';
+                callHistoryList.appendChild(newMessage);
+                noHistoryMessage = newMessage; 
+            }
+        });
+
+        updateCounts();
+    </script>
 </body>
 </html>
